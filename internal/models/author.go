@@ -2,7 +2,7 @@ package models
 
 type Author struct {
 	//Id int
-	NameSurname string
+	NameSurname string `json:"AuthorName"`
 }
 
 func NewAuthor(nameSurname string) *Author {
