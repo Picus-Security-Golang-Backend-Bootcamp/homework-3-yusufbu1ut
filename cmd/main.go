@@ -20,6 +20,7 @@ var (
 	ListErr              = errors.New("Expected List arg > 'list', 'list' 'a' or 'list' 'b'")
 	SearchErr            = errors.New("Expeted Search arg > 'search' 'some arg/args for search'")
 	BuyErr               = errors.New("Expected Buy args > 'buy' 'uint' 'uint'")
+	buyBookErr           = errors.New("The Book is not in books")
 	DeleteErr            = errors.New("Expected Delete arg> 'delete' 'uint'")
 )
 
@@ -119,9 +120,6 @@ func main() {
 		fmt.Println(BuyErr)
 		return
 	}
-
-	fmt.Scanln()
-
 }
 
 // // bookList Lists Books
@@ -221,6 +219,10 @@ func buyWithID(id int, cnt int) {
 		fmt.Println(err)
 		return
 	} else {
+		if len(book) == 0 {
+			fmt.Println(buyBookErr)
+			return
+		}
 		err = bookRepository.Buy(book[0], cnt)
 		if err != nil {
 			fmt.Println(err, err.Error())
