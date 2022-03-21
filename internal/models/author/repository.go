@@ -6,6 +6,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	declaredAuthor = errors.New("Author has been declared")
+)
+
 type AuthorRepository struct {
 	db *gorm.DB
 }
@@ -37,6 +41,18 @@ func (r *AuthorRepository) GetAllAuthors() ([]Author, error) {
 	}
 
 	return authors, nil
+}
+
+//FindByAuthor finds Author with given author
+func (r *AuthorRepository) FindByAuthor(author Author) (Author, error) {
+	var athr Author
+	result := r.db.Where(&Author{NameSurname: author.NameSurname}).First(&athr)
+
+	if result.Error != nil {
+		return author, result.Error
+	}
+
+	return athr, nil
 }
 
 //FindByAuthorName finds all Authors with given input
@@ -87,16 +103,13 @@ func (r *AuthorRepository) DeleteByID(id int) error {
 
 //Create creats with given author
 func (r *AuthorRepository) Create(author Author) error {
-	var athr Author
-	result := r.db.Where(&Author{NameSurname: author.NameSurname, Age: author.Age}).First(&athr)
+	result := r.db.Where(&Author{NameSurname: author.NameSurname}).First(&author)
 	if result.Error != nil {
-		return result.Error
+		r.db.Create(&author)
+		return nil
 	}
-	if athr.NameSurname == author.NameSurname {
-		return errors.New("Author has been declared")
-	}
-	r.db.Create(author)
-	return nil
+
+	return declaredAuthor
 }
 
 //Update updates with given author

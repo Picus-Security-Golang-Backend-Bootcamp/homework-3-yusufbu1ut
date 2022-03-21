@@ -3,11 +3,11 @@ package author
 import (
 	"fmt"
 
-	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/pkg/helper"
+	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/pkg/funcs"
 	"gorm.io/gorm"
 )
 
-var id = 0
+var id = 0 //for csv to slices after db adding; helper/readInsert
 
 type Author struct {
 	gorm.Model
@@ -16,12 +16,19 @@ type Author struct {
 	Age         int
 }
 
-func NewAuthor(nameSurname string) *Author {
+func NewAuthor(nameSurname string) *Author { //for csv to slices after db adding; helper/readInsert
 	id++
 	return &Author{
 		ID:          uint(id),
 		NameSurname: nameSurname,
-		Age:         helper.RandomInt(20, 80),
+		Age:         funcs.RandomInt(20, 80),
+	}
+}
+
+func NewAuth(nameSurname string) *Author { //for csv to db adding ; helper/csvToDB
+	return &Author{
+		NameSurname: nameSurname,
+		Age:         funcs.RandomInt(20, 80),
 	}
 }
 

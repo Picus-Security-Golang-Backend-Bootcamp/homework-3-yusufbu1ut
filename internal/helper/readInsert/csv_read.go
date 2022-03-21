@@ -1,4 +1,4 @@
-package sample
+package readInsert
 
 import (
 	"encoding/csv"
@@ -26,7 +26,6 @@ func ReadBookWithWorkerPool(path string) ([]book.Book, []author.Author, []bookAu
 
 	linesChan := make(chan []string)
 	resultsChan := make(chan item)
-	var results []item
 	wgB := new(sync.WaitGroup)
 	for w := 1; w <= 3; w++ {
 		wgB.Add(1)
@@ -55,11 +54,12 @@ func ReadBookWithWorkerPool(path string) ([]book.Book, []author.Author, []bookAu
 
 		close(resultsChan)
 	}()
+	//	var results []item
+	// for i := range resultsChan {
 
-	for i := range resultsChan {
-		results = append(results, i)
-	}
-	for _, v := range results {
+	// 	results = append(results, i)
+	// }
+	for v := range resultsChan {
 		ResultsBooks = append(ResultsBooks, v.bks) //Books appending to add to db.books
 		ResultsBookAuth, ResultsAuthors = sepAddAuthors(v.auths, v.bks, ResultsBookAuth, ResultsAuthors)
 	}

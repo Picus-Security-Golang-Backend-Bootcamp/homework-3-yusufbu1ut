@@ -6,6 +6,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	declaredElement = errors.New("Element has been declared")
+)
+
 type BookAuthRepository struct {
 	db *gorm.DB
 }
@@ -53,37 +57,68 @@ func (r *BookAuthRepository) FindByAuthorID(id int) ([]Book_Author, error) {
 
 //DeleteByISBN deletes items looking isbn colmn returns authors that have no book which as not deleted
 func (r *BookAuthRepository) DeleteByISBN(isbn int) ([]int, error) {
-	ba, _ := r.FindByISBN(isbn)
+	ba, err := r.FindByISBN(isbn)
+	if err != nil {
+		return nil, err
+	}
+
 	result := r.db.Delete(ba)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
 	var authorsID []int
 	for _, v := range ba {
-		var book_authors []Book_Author
-		rslt := r.db.Find(&book_authors, "author_id = ?", v.AuthorID)
-		if rslt.Error != nil {
-			return nil, rslt.Error
+		// var book_authors []Book_Author
+		// rslt := r.db.Find(&book_authors, "author_id = ?", v.AuthorID)
+		// if rslt.Error != nil {
+		// 	return nil, rslt.Error
+		// }
+		book_authors, err := r.FindByAuthorID(int(v.AuthorID))
+		if err != nil {
+			return nil, err
 		}
 		if len(book_authors) == 0 {
 			authorsID = append(authorsID, int(v.AuthorID))
 		}
 	}
 
+	return authorsID, nil
+}
+
+func (r *BookAuthRepository) DeleteByAuthorID(id int) ([]int, error) {
+	ba, err := r.FindByAuthorID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	result := r.db.Delete(ba)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return authorsID, nil
+	var booksId []int
+	for _, v := range ba {
+
+		book_authors, err := r.FindByAuthorID(v.BookID)
+		if err != nil {
+			return nil, err
+		}
+		if len(book_authors) == 0 {
+			booksId = append(booksId, v.BookID)
+		}
+	}
+
+	return booksId, nil
 }
 
 // Create creates new book_authors element
 func (r *BookAuthRepository) Create(bauthors Book_Author) error {
-	var ba Book_Author
-	result := r.db.Where(&Book_Author{BookID: bauthors.BookID, AuthorID: bauthors.AuthorID}).First(&ba)
+	result := r.db.Where(&Book_Author{BookID: bauthors.BookID, AuthorID: bauthors.AuthorID}).First(&bauthors)
 	if result.Error != nil {
-		return result.Error
+		r.db.Create(&bauthors)
+		return nil
 	}
-	if ba.AuthorID == bauthors.AuthorID {
-		return errors.New("Element has been declared")
-	}
-	r.db.Create(bauthors)
-	return nil
+
+	return declaredElement
 }

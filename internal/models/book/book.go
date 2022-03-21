@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/pkg/helper"
+	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/pkg/funcs"
 )
 
 type Book struct {
@@ -26,9 +26,9 @@ func NewBook(name string, isbn int, page string, publish string) *Book {
 		ISBN:        isbn,
 		Pages:       page,
 		Publisher:   publish,
-		StockCode:   helper.RandomInt(100000, 1000000),
-		Price:       helper.RandFloat(50, 250),
-		StockAmount: helper.RandomInt(50, 100),
+		StockCode:   funcs.RandomInt(100000, 1000000),
+		Price:       funcs.RandFloat(50, 250),
+		StockAmount: funcs.RandomInt(50, 100),
 	}
 }
 

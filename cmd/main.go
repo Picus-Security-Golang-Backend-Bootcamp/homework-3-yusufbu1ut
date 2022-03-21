@@ -1,37 +1,31 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/internal/helper"
-	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/internal/infrastructure"
+	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/internal/helper/csvToDB"
 	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/internal/models/author"
 	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/internal/models/book"
 	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/internal/models/bookAuthor"
-	"github.com/Picus-Security-Golang-Backend-Bootcamp/homework-3-yusufbu1ut/internal/sample"
 )
 
 var (
 	bookRepository       *book.BookRepository
 	authorRepository     *author.AuthorRepository
 	bookAuthorRepository *bookAuthor.BookAuthRepository
+	ListErr              = errors.New("Expected List arg > 'list', 'list' 'a' or 'list' 'b'")
+	SearchErr            = errors.New("Expeted Search arg > 'search' 'some arg/args for search'")
+	BuyErr               = errors.New("Expected Buy args > 'buy' 'uint' 'uint'")
+	DeleteErr            = errors.New("Expected Delete arg> 'delete' 'uint'")
 )
 
 func init() {
-	ResultsBooks, ResultsAuthors, ResultsBookAuth, _ := sample.ReadBookWithWorkerPool("../docs/books.csv")                        //Take comment after fist run
-	db := infrastructure.NewPostgresDB("host=localhost user=postgres password=pass1234 dbname=library port=5432 sslmode=disable") // arrange it for your db connections
-	bookRepository = book.NewBookRepository(db)
-	authorRepository = author.NewAuthorRepository(db)
-	bookAuthorRepository = bookAuthor.NewBookAuthRepository(db)
-	bookRepository.Migration()
-	bookRepository.InsertSampleData(ResultsBooks) //Take comment after fist run
-	authorRepository.Migration()
-	authorRepository.InsertSampleData(ResultsAuthors) //Take comment after fist run
-	bookAuthorRepository.Migration()
-	bookAuthorRepository.InsertSampleData(ResultsBookAuth) //Take comment after fist run
+	bookRepository, authorRepository, bookAuthorRepository = csvToDB.ToConnectDB() // Connecting DB and Adding sample csv datas
+	//bookAuthorRepository, authorRepository, bookRepository = readInsert.ReadConnectDB() //Connecting DB, seperating CSV to slices and  Adding sample slices datas
 
 }
 
@@ -50,18 +44,18 @@ func main() {
 				if len(os.Args) == 3 {
 					bookList()
 				} else {
-					fmt.Println(helper.ListErr)
+					fmt.Println(ListErr)
 					return
 				}
 			} else if os.Args[2] == "a" {
 				if len(os.Args) == 3 {
 					authList()
 				} else {
-					fmt.Println(helper.ListErr)
+					fmt.Println(ListErr)
 					return
 				}
 			} else {
-				fmt.Println(helper.ListErr)
+				fmt.Println(ListErr)
 				return
 			}
 		}
@@ -73,7 +67,7 @@ func main() {
 		if len(os.Args) > 2 {
 			searchByInput(srch)
 		} else {
-			fmt.Println(helper.SearchErr)
+			fmt.Println(SearchErr)
 			return
 		}
 
@@ -90,13 +84,13 @@ func main() {
 				return
 			}
 			if intId <= 0 || intCnt <= 0 {
-				fmt.Println(helper.BuyErr)
+				fmt.Println(BuyErr)
 				return
 			}
 			buyWithID(intId, intCnt)
 
 		} else {
-			fmt.Println(helper.BuyErr)
+			fmt.Println(BuyErr)
 			return
 		}
 
@@ -109,17 +103,20 @@ func main() {
 				return
 			}
 			if intId <= 0 {
-				fmt.Println(helper.DeleteErr)
+				fmt.Println(DeleteErr)
 				return
 			}
 			deleteByID(intId)
 
 		} else {
-			fmt.Println(helper.DeleteErr)
+			fmt.Println(DeleteErr)
 			return
 		}
 	default:
-		fmt.Println(helper.DeleteErr)
+		fmt.Println(ListErr)
+		fmt.Println(SearchErr)
+		fmt.Println(DeleteErr)
+		fmt.Println(BuyErr)
 		return
 	}
 
@@ -127,7 +124,7 @@ func main() {
 
 }
 
-// bookList Lists Books
+// // bookList Lists Books
 func bookList() {
 	books, err := bookRepository.GetAllBooks()
 
@@ -156,7 +153,7 @@ func authList() {
 
 // searchByInput takes input parameter and first checks books and books' authors if it cant find any searchs on authors
 func searchByInput(srch string) {
-	books, err := bookRepository.FindByBookName(srch)
+	books, err := bookRepository.FindByName(srch)
 	//In Books
 	if len(books) > 0 {
 		if err != nil {
@@ -245,7 +242,7 @@ func deleteByID(id int) {
 		fmt.Println(err, err.Error())
 		return
 	}
-	//The authors that no have in books are deleting too with his/her only one book, if delete this part only books will be deleted
+	//The authors that no have in books are deleting too if he/she has no book, if delete this part only books will be deleted
 	for _, a := range authors {
 		err = authorRepository.DeleteByID(a)
 		if err != nil {

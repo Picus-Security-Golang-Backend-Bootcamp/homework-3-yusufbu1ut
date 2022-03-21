@@ -36,10 +36,10 @@ DeletedAt
 Name
 Pages       
 Publisher   
-StockCode   
-StockAmount     
+StockCode   //random int    
+StockAmount     //random int   
 ISBN    (unique count and foreing key with referance book_authors BookID)    
-Price       
+Price   //random float       
 
 ### book_authors
 ***
@@ -57,5 +57,7 @@ CreatedAt
 UpdatedAt   
 DeletedAt   
 NameSurname     
-Age             
+Age     //random int        
 
+## Information
+internal/helper has two different way to add datas from csv. First, /csvToDB creates datas and adds directly in to the db. Second, /readInsert creates datas bring them together in a slice after adds to db with repository.InsertSampleData funcs.  

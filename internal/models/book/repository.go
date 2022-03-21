@@ -9,6 +9,7 @@ import (
 
 var (
 	hihgerAmount = errors.New("Given count is higher than book' amount.")
+	declaredBook = errors.New("Book has been declared")
 )
 
 type BookRepository struct {
@@ -46,7 +47,7 @@ func (r *BookRepository) GetAllBooks() ([]Book, error) {
 }
 
 // FindByBookName finds books with given input
-func (r *BookRepository) FindByBookName(input string) ([]Book, error) {
+func (r *BookRepository) FindByName(input string) ([]Book, error) {
 	var books []Book
 	result := r.db.Where("LOWER(name) LIKE LOWER(?)", "%"+input+"%").Find(&books)
 
@@ -83,6 +84,10 @@ func (r *BookRepository) FindByISBN(isbn int) ([]Book, error) {
 
 // Deletes book with given book
 func (r *BookRepository) Delete(b Book) error {
+	_, err := r.FindByID(int(b.ID))
+	if err != nil {
+		return err
+	}
 	result := r.db.Delete(b)
 
 	if result.Error != nil {
@@ -110,15 +115,11 @@ func (r *BookRepository) DeleteByID(id int) ([]Book, error) {
 
 // Create creates book if it is not exist and uniqe looking on isbn name publisher
 func (r *BookRepository) Create(book Book) error {
-	var bk Book
-	result := r.db.Where(&Book{Name: book.Name, ISBN: book.ISBN, Publisher: book.Publisher}).First(&bk)
-	if result.Error != nil {
-		return result.Error
+	result, _ := r.FindByISBN(book.ISBN)
+	if len(result) != 0 {
+		return declaredBook
 	}
-	if bk.ISBN == book.ISBN {
-		return errors.New("Book has been declared")
-	}
-	r.db.Create(book)
+	r.db.Create(&book)
 	return nil
 }
 
@@ -139,7 +140,7 @@ func (r *BookRepository) Buy(book Book, count int) error {
 
 	book.StockAmount -= count
 
-	r.db.Save(book)
+	r.Update(book)
 
 	return nil
 }
